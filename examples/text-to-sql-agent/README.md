@@ -1,6 +1,6 @@
 # Text-to-SQL Deep Agent
 
-A natural language to SQL query agent powered by LangChain's **Deep Agents** framework.  This is an advanced version of a text-to-SQL agent with planning, filesystem, and subagent capabilities.
+A natural language to SQL query agent powered by LangChain's **Deep Agents** framework and either Anthropic or OpenAI models. This is an advanced version of a text-to-SQL agent with planning, filesystem, and subagent capabilities.
 
 ## What is Deep Agents?
 
@@ -20,7 +20,7 @@ Uses the [Chinook database](https://github.com/lerocha/chinook-database) - a sam
 ### Prerequisites
 
 - Python 3.11 or higher
-- Anthropic API key ([get one here](https://console.anthropic.com/))
+- An API key for your chosen provider: [Anthropic](https://console.anthropic.com/) or [OpenAI](https://platform.openai.com/api-keys)
 - (Optional) LangSmith API key for tracing ([sign up here](https://smith.langchain.com/))
 
 ### Installation
@@ -55,10 +55,11 @@ cp .env.example .env
 # Edit .env and add your API keys
 ```
 
-Required in `.env`:
+Set the key for the provider you plan to use in `.env`:
 
 ```
 ANTHROPIC_API_KEY=your_anthropic_api_key_here
+OPENAI_API_KEY=your_openai_api_key_here
 ```
 
 Optional:
@@ -80,6 +81,18 @@ Run the agent from the command line with a natural language question:
 python agent.py "What are the top 5 best-selling artists?"
 ```
 
+Anthropic is the default provider. To use OpenAI with the default `gpt-5.6-terra` model:
+
+```bash
+python agent.py --provider openai "What are the top 5 best-selling artists?"
+```
+
+Override the provider's default model with `--model`:
+
+```bash
+python agent.py --provider openai --model gpt-5.6-sol "What are the top 5 best-selling artists?"
+```
+
 ```bash
 python agent.py "Which employee generated the most revenue by country?"
 ```
@@ -95,8 +108,8 @@ You can also use the agent in your Python code:
 ```python
 from agent import create_sql_deep_agent
 
-# Create the agent
-agent = create_sql_deep_agent()
+# Create the agent with Anthropic (default) or OpenAI
+agent = create_sql_deep_agent(provider="openai")
 
 # Ask a question
 result = agent.invoke({
