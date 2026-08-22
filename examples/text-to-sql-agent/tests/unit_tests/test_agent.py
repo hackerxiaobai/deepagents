@@ -19,7 +19,10 @@ class ModelValidationTests(TestCase):
         model = _create_model("anthropic")
 
         chat_anthropic.assert_called_once_with(
-            model_name=DEFAULT_MODELS["anthropic"], temperature=0
+            model_name=DEFAULT_MODELS["anthropic"],
+            temperature=0,
+            stop=None,
+            timeout=None,
         )
         self.assertIs(model, chat_anthropic.return_value)
 
