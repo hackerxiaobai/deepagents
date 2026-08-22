@@ -1,6 +1,6 @@
 # Text-to-SQL Deep Agent
 
-A natural language to SQL query agent powered by LangChain's **Deep Agents** framework and either Anthropic or OpenAI models. This is an advanced version of a text-to-SQL agent with planning, filesystem, and subagent capabilities.
+A natural language to SQL query agent powered by LangChain's **Deep Agents** framework and a choice of Anthropic, OpenAI, Kimi, GLM, DeepSeek, Gemini, Qwen, or Grok models. This is an advanced version of a text-to-SQL agent with planning, filesystem, and subagent capabilities.
 
 ## What is Deep Agents?
 
@@ -20,7 +20,7 @@ Uses the [Chinook database](https://github.com/lerocha/chinook-database) - a sam
 ### Prerequisites
 
 - Python 3.11 or higher
-- An API key for your chosen provider: [Anthropic](https://console.anthropic.com/) or [OpenAI](https://platform.openai.com/api-keys)
+- An API key for at least one supported model provider
 - (Optional) LangSmith API key for tracing ([sign up here](https://smith.langchain.com/))
 
 ### Installation
@@ -60,6 +60,18 @@ Set the key for the provider you plan to use in `.env`:
 ```
 ANTHROPIC_API_KEY=your_anthropic_api_key_here
 OPENAI_API_KEY=your_openai_api_key_here
+MOONSHOT_API_KEY=your_kimi_api_key_here
+ZAI_API_KEY=your_glm_api_key_here
+DEEPSEEK_API_KEY=your_deepseek_api_key_here
+GEMINI_API_KEY=your_gemini_api_key_here
+DASHSCOPE_API_KEY=your_qwen_api_key_here
+XAI_API_KEY=your_grok_api_key_here
+```
+
+Only the key for the selected provider is required. For a mainland China Qwen API key, also set:
+
+```
+DASHSCOPE_API_BASE=https://dashscope.aliyuncs.com/compatible-mode/v1
 ```
 
 Optional:
@@ -81,24 +93,35 @@ Run the agent from the command line with a natural language question:
 python agent.py "What are the top 5 best-selling artists?"
 ```
 
-Anthropic is the default provider. To use OpenAI with the default `gpt-5.6-terra` model:
+Anthropic is the default provider. Select any provider with `--provider`:
 
 ```bash
-python agent.py --provider openai "What are the top 5 best-selling artists?"
+python agent.py --provider kimi "What are the top 5 best-selling artists?"
 ```
 
-Override the provider's default model with `--model`:
+Each provider has a default model:
+
+| Provider | Default model | API key variable |
+| --- | --- | --- |
+| `anthropic` | `claude-haiku-4-5-20251001` | `ANTHROPIC_API_KEY` |
+| `openai` | `gpt-5.6-terra` | `OPENAI_API_KEY` |
+| `kimi` | `kimi-k3` | `MOONSHOT_API_KEY` |
+| `glm` | `glm-5.1` | `ZAI_API_KEY` |
+| `deepseek` | `deepseek-v4-flash` | `DEEPSEEK_API_KEY` |
+| `gemini` | `gemini-3.7-flash` | `GEMINI_API_KEY` |
+| `qwen` | `qwen3.7-plus` | `DASHSCOPE_API_KEY` |
+| `grok` | `grok-4.6` | `XAI_API_KEY` |
+
+Override the default with `--model`:
 
 ```bash
-python agent.py --provider openai --model gpt-5.6-sol "What are the top 5 best-selling artists?"
+python agent.py --provider qwen --model qwen3.8-max "What are the top 5 best-selling artists?"
 ```
 
-```bash
-python agent.py "Which employee generated the most revenue by country?"
-```
+When the model name starts with a known provider prefix, `--provider` can be omitted:
 
 ```bash
-python agent.py "How many customers are from Canada?"
+python agent.py --model gemini-3.7-flash "How many customers are from Canada?"
 ```
 
 ### Programmatic Usage
@@ -108,8 +131,9 @@ You can also use the agent in your Python code:
 ```python
 from agent import create_sql_deep_agent
 
-# Create the agent with Anthropic (default) or OpenAI
-agent = create_sql_deep_agent(provider="openai")
+# Select a provider or let the model name infer it
+agent = create_sql_deep_agent(provider="deepseek")
+# agent = create_sql_deep_agent(model_name="grok-4.6")
 
 # Ask a question
 result = agent.invoke({

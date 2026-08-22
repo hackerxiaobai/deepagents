@@ -1,6 +1,7 @@
 import argparse
 import os
 import sys
+from collections.abc import Callable
 from typing import Literal, cast
 
 from deepagents import create_deep_agent
@@ -10,8 +11,13 @@ from langchain_anthropic import ChatAnthropic
 from langchain_community.agent_toolkits import SQLDatabaseToolkit
 from langchain_community.utilities import SQLDatabase
 from langchain_core.language_models import BaseChatModel
+from langchain_deepseek import ChatDeepSeek
+from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_openai import ChatOpenAI
+from langchain_qwq import ChatQwen
+from langchain_xai import ChatXAI
 from langgraph.graph.state import CompiledStateGraph
+from pydantic import SecretStr
 from rich.console import Console
 from rich.panel import Panel
 
@@ -20,20 +26,121 @@ load_dotenv()
 
 console = Console()
 
-ModelProvider = Literal["anthropic", "openai"]
+ModelProvider = Literal[
+    "anthropic", "openai", "kimi", "glm", "deepseek", "gemini", "qwen", "grok"
+]
 DEFAULT_MODELS: dict[ModelProvider, str] = {
     "anthropic": "claude-haiku-4-5-20251001",
     "openai": "gpt-5.6-terra",
+    "kimi": "kimi-k3",
+    "glm": "glm-5.3",
+    "deepseek": "deepseek-v4-flash",
+    "gemini": "gemini-3.7-flash",
+    "qwen": "qwen3.8-max",
+    "grok": "grok-4.6",
+}
+MODEL_PREFIXES: tuple[tuple[str, ModelProvider], ...] = (
+    ("claude", "anthropic"),
+    ("gpt", "openai"),
+    ("kimi", "kimi"),
+    ("moonshot", "kimi"),
+    ("glm", "glm"),
+    ("deepseek", "deepseek"),
+    ("gemini", "gemini"),
+    ("qwen", "qwen"),
+    ("qwq", "qwen"),
+    ("grok", "grok"),
+)
+
+
+def _require_api_key(name: str, provider: ModelProvider) -> SecretStr:
+    """Read a required provider API key from the environment."""
+    value = os.getenv(name)
+    if value:
+        return SecretStr(value)
+    msg = f"Set {name} in .env before using the {provider} provider."
+    raise ValueError(msg)
+
+
+def _create_anthropic_model(model_name: str) -> BaseChatModel:
+    return ChatAnthropic(model_name=model_name, temperature=0)
+
+
+def _create_openai_model(model_name: str) -> BaseChatModel:
+    return ChatOpenAI(model=model_name, use_responses_api=True)
+
+
+def _create_kimi_model(model_name: str) -> BaseChatModel:
+    return ChatOpenAI(
+        model=model_name,
+        api_key=_require_api_key("MOONSHOT_API_KEY", "kimi"),
+        base_url="https://api.moonshot.ai/v1",
+    )
+
+
+def _create_glm_model(model_name: str) -> BaseChatModel:
+    return ChatOpenAI(
+        model=model_name,
+        api_key=_require_api_key("ZAI_API_KEY", "glm"),
+        base_url="https://api.z.ai/api/paas/v4/",
+    )
+
+
+def _create_deepseek_model(model_name: str) -> BaseChatModel:
+    return ChatDeepSeek(model=model_name)
+
+
+def _create_gemini_model(model_name: str) -> BaseChatModel:
+    return ChatGoogleGenerativeAI(model=model_name)
+
+
+def _create_qwen_model(model_name: str) -> BaseChatModel:
+    return ChatQwen(model=model_name)
+
+
+def _create_grok_model(model_name: str) -> BaseChatModel:
+    return ChatXAI(model=model_name)
+
+
+MODEL_FACTORIES: dict[ModelProvider, Callable[[str], BaseChatModel]] = {
+    "anthropic": _create_anthropic_model,
+    "openai": _create_openai_model,
+    "kimi": _create_kimi_model,
+    "glm": _create_glm_model,
+    "deepseek": _create_deepseek_model,
+    "gemini": _create_gemini_model,
+    "qwen": _create_qwen_model,
+    "grok": _create_grok_model,
 }
 
 
+def _infer_provider(model_name: str) -> ModelProvider:
+    """Infer a provider from a model name prefix."""
+    normalized_name = model_name.lower()
+    for prefix, provider in MODEL_PREFIXES:
+        if normalized_name.startswith(prefix):
+            return provider
+    msg = f"Cannot infer a provider for model {model_name!r}; pass --provider."
+    raise ValueError(msg)
+
+
+def _resolve_provider(
+    provider: ModelProvider | None, model_name: str | None
+) -> ModelProvider:
+    if provider is not None:
+        return provider
+    if model_name is not None:
+        return _infer_provider(model_name)
+    return "anthropic"
+
+
 def _create_model(
-    provider: ModelProvider, model_name: str | None = None
+    provider: ModelProvider | None = None, model_name: str | None = None
 ) -> BaseChatModel:
     """Create a chat model for the requested provider.
 
     Args:
-        provider: Model provider to use.
+        provider: Model provider to use. Inferred from `model_name` when omitted.
         model_name: Provider-specific model name. Uses the provider default when omitted.
 
     Returns:
@@ -42,29 +149,25 @@ def _create_model(
     Raises:
         ValueError: If `provider` is unsupported.
     """
-    resolved_model = model_name or DEFAULT_MODELS.get(provider)
-    if resolved_model is None:
-        msg = f"Unsupported model provider: {provider}"
+    resolved_provider = _resolve_provider(provider, model_name)
+    try:
+        resolved_model = model_name or DEFAULT_MODELS[resolved_provider]
+        factory = MODEL_FACTORIES[resolved_provider]
+    except KeyError:
+        msg = f"Unsupported model provider: {resolved_provider}"
         raise ValueError(msg)
-
-    if provider == "anthropic":
-        return ChatAnthropic(model_name=resolved_model, temperature=0)
-    if provider == "openai":
-        return ChatOpenAI(model=resolved_model, use_responses_api=True,)
-
-    msg = f"Unsupported model provider: {provider}"
-    raise ValueError(msg)
+    return factory(resolved_model)
 
 
 def create_sql_deep_agent(
     *,
-    provider: ModelProvider = "anthropic",
+    provider: ModelProvider | None = None,
     model_name: str | None = None,
 ) -> CompiledStateGraph:
     """Create a text-to-SQL Deep Agent.
 
     Args:
-        provider: Model provider to use.
+        provider: Model provider to use. Inferred from `model_name` when omitted.
         model_name: Provider-specific model name. Uses the provider default when omitted.
 
     Returns:
@@ -111,7 +214,8 @@ def main() -> None:
 Examples:
   python agent.py "What are the top 5 best-selling artists?"
   python agent.py --provider openai "What are the top 5 best-selling artists?"
-  python agent.py --provider openai --model gpt-5.6-sol "How many customers are from Canada?"
+  python agent.py --provider kimi "How many customers are from Canada?"
+  python agent.py --model gemini-3.7-flash "Which employee generated the most revenue?"
   python agent.py "Which employee generated the most revenue by country?"
         """,
     )
@@ -123,8 +227,7 @@ Examples:
     parser.add_argument(
         "--provider",
         choices=tuple(DEFAULT_MODELS),
-        default="anthropic",
-        help="Model provider to use (default: anthropic)",
+        help="Model provider (default: inferred from --model, otherwise anthropic)",
     )
     parser.add_argument(
         "--model",
@@ -142,7 +245,7 @@ Examples:
 
     # Create the agent
     console.print("[dim]Creating SQL Deep Agent...[/dim]")
-    provider = cast(ModelProvider, args.provider)
+    provider = cast(ModelProvider | None, args.provider)
     agent = create_sql_deep_agent(provider=provider, model_name=args.model_name)
 
     # Invoke the agent
