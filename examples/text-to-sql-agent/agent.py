@@ -10,6 +10,7 @@ from dotenv import load_dotenv
 from langchain_anthropic import ChatAnthropic
 from langchain_community.agent_toolkits import SQLDatabaseToolkit
 from langchain_community.utilities import SQLDatabase
+from langchain_core.runnables import RunnableConfig
 from langchain_core.language_models import BaseChatModel
 from langchain_deepseek import ChatDeepSeek
 from langchain_google_genai import ChatGoogleGenerativeAI
@@ -63,7 +64,7 @@ def _require_api_key(name: str, provider: ModelProvider) -> SecretStr:
 
 
 def _create_anthropic_model(model_name: str) -> BaseChatModel:
-    return ChatAnthropic(model_name=model_name, temperature=0)
+    return ChatAnthropic(model_name=model_name, temperature=0, stop=None, timeout=None)
 
 
 def _create_openai_model(model_name: str) -> BaseChatModel:
@@ -132,6 +133,19 @@ def _resolve_provider(
     if model_name is not None:
         return _infer_provider(model_name)
     return "anthropic"
+
+
+def _build_trace_tags(
+    provider: ModelProvider | None, model_name: str | None
+) -> list[str]:
+    """Build LangSmith tags for the selected provider and model."""
+    resolved_provider = _resolve_provider(provider, model_name)
+    resolved_model = model_name or DEFAULT_MODELS[resolved_provider]
+    return [
+        "app:text-to-sql",
+        f"provider:{resolved_provider}",
+        f"model:{resolved_model}",
+    ]
 
 
 def _create_model(
@@ -247,13 +261,16 @@ Examples:
     console.print("[dim]Creating SQL Deep Agent...[/dim]")
     provider = cast(ModelProvider | None, args.provider)
     agent = create_sql_deep_agent(provider=provider, model_name=args.model_name)
+    trace_tags = _build_trace_tags(provider, args.model_name)
+    invoke_config: RunnableConfig = {"tags": trace_tags}
 
     # Invoke the agent
     console.print("[dim]Processing query...[/dim]\n")
 
     try:
         result = agent.invoke(
-            {"messages": [{"role": "user", "content": args.question}]}
+            {"messages": [{"role": "user", "content": args.question}]},
+            config=invoke_config,
         )
 
         # Extract and display the final answer

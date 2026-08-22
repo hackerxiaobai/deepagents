@@ -1,7 +1,14 @@
 from unittest import TestCase
 from unittest.mock import MagicMock, patch
 
-from agent import DEFAULT_MODELS, _create_model, _infer_provider, create_sql_deep_agent
+from agent import (
+    DEFAULT_MODELS,
+    _build_trace_tags,
+    _create_model,
+    _infer_provider,
+    create_sql_deep_agent,
+    main,
+)
 
 
 class ModelValidationTests(TestCase):
@@ -107,6 +114,26 @@ class ModelValidationTests(TestCase):
             with self.subTest(model_name=model_name):
                 self.assertEqual(_infer_provider(model_name), provider)
 
+    def test_build_trace_tags_uses_provider_default_model(self) -> None:
+        tags = _build_trace_tags("kimi", None)
+
+        self.assertEqual(
+            tags,
+            [
+                "app:text-to-sql",
+                "provider:kimi",
+                f"model:{DEFAULT_MODELS['kimi']}",
+            ],
+        )
+
+    def test_build_trace_tags_infers_provider_from_model(self) -> None:
+        tags = _build_trace_tags(None, "glm-5.3")
+
+        self.assertEqual(
+            tags,
+            ["app:text-to-sql", "provider:glm", "model:glm-5.3"],
+        )
+
     @patch("agent.ChatGoogleGenerativeAI")
     def test_create_model_infers_provider(self, chat_gemini: MagicMock) -> None:
         _create_model(model_name="gemini-3.7-flash")
@@ -138,3 +165,36 @@ class ModelValidationTests(TestCase):
             create_deep_agent.call_args.kwargs["model"], create_model.return_value
         )
         self.assertIs(graph, create_deep_agent.return_value)
+
+    @patch("agent.console")
+    @patch("agent.create_sql_deep_agent")
+    @patch(
+        "agent.sys.argv",
+        ["agent.py", "--provider", "kimi", "How many customers are there?"],
+    )
+    def test_main_adds_model_trace_tags(
+        self, create_agent: MagicMock, _console: MagicMock
+    ) -> None:
+        create_agent.return_value.invoke.return_value = {
+            "messages": [MagicMock(content="There are 59 customers.")]
+        }
+
+        main()
+
+        create_agent.return_value.invoke.assert_called_once_with(
+            {
+                "messages": [
+                    {
+                        "role": "user",
+                        "content": "How many customers are there?",
+                    }
+                ]
+            },
+            config={
+                "tags": [
+                    "app:text-to-sql",
+                    "provider:kimi",
+                    f"model:{DEFAULT_MODELS['kimi']}",
+                ]
+            },
+        )
