@@ -4,14 +4,12 @@ import sys
 from collections.abc import Callable
 from typing import Literal, cast
 
-from deepagents import create_deep_agent
-from deepagents.backends import FilesystemBackend
 from dotenv import load_dotenv
 from langchain_anthropic import ChatAnthropic
 from langchain_community.agent_toolkits import SQLDatabaseToolkit
 from langchain_community.utilities import SQLDatabase
-from langchain_core.runnables import RunnableConfig
 from langchain_core.language_models import BaseChatModel
+from langchain_core.runnables import RunnableConfig
 from langchain_deepseek import ChatDeepSeek
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_openai import ChatOpenAI
@@ -21,6 +19,9 @@ from langgraph.graph.state import CompiledStateGraph
 from pydantic import SecretStr
 from rich.console import Console
 from rich.panel import Panel
+
+from deepagents import create_deep_agent
+from deepagents.backends import FilesystemBackend
 
 # Load environment variables
 load_dotenv()
