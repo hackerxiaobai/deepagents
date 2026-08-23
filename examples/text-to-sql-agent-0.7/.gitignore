@@ -1,0 +1,35 @@
+# Environment variables
+.env
+
+# Database
+chinook.db
+
+# Virtual environment
+.venv/
+venv/
+env/
+.ruff_cache/
+text2sql_deepagent.egg-info/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# Deep Agent filesystem (if using local backend)
+.deepagent_fs/
+agent_files/
+agent_workspace/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
