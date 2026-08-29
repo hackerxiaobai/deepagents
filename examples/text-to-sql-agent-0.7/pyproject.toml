@@ -20,6 +20,7 @@ dependencies = [
     "python-dotenv>=1.2.2",
     "tavily-python>=0.7.26",
     "rich>=15.0.0",
+    "ipdb>=0.13.13",
 ]
 
 [project.urls]

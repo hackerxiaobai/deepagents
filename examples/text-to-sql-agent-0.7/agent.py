@@ -41,7 +41,7 @@ DEFAULT_MODELS: dict[ModelProvider, str] = {
     "kimi": "kimi-k3",
     "glm": "glm-5.3",
     "deepseek": "deepseek-v4-flash",
-    "gemini": "gemini-3.7-flash",
+    "gemini": "gemini-3.6-flash",
     "qwen": "qwen3.8-max",
     "grok": "grok-4.6",
 }
@@ -97,7 +97,11 @@ def _create_deepseek_model(model_name: str) -> BaseChatModel:
 
 
 def _create_gemini_model(model_name: str) -> BaseChatModel:
-    return ChatGoogleGenerativeAI(model=model_name)
+    return ChatGoogleGenerativeAI(
+        model=model_name,
+        timeout=60,
+        max_retries=1,
+    )
 
 
 def _create_qwen_model(model_name: str) -> BaseChatModel:
@@ -212,6 +216,7 @@ def create_sql_deep_agent(
     # Replace the default filesystem middleware with a read-only allowlist.
     register_read_only_sql_harness_profiles()
     agent = create_deep_agent(
+        name="sql-deep-agent",
         model=model,
         memory=["./AGENTS.md"],  # Agent identity and general instructions
         skills=[
