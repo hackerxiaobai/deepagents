@@ -21,6 +21,8 @@ dependencies = [
     "tavily-python>=0.7.26",
     "rich>=15.0.0",
     "ipdb>=0.13.13",
+    "syllable-counter>=0.2.4",
+    "ipython>=9.17.0",
 ]
 
 [project.urls]
