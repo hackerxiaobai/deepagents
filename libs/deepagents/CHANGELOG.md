@@ -2,6 +2,31 @@
 
 # Deep Agents Changelog
 
+## [0.7.12](https://github.com/hackerxiaobai/deepagents/compare/deepagents==0.7.11...deepagents==0.7.12) (2026-09-05)
+
+
+### Features
+
+* **sdk:** add rubric grader integration hooks ([#5874](https://github.com/hackerxiaobai/deepagents/issues/5874)) ([07c0340](https://github.com/hackerxiaobai/deepagents/commit/07c0340bc41e3717f1cd73705b71f1f6a87d753f))
+* **sdk:** disable tracing inputs on middleware ([#5377](https://github.com/hackerxiaobai/deepagents/issues/5377)) ([0aade99](https://github.com/hackerxiaobai/deepagents/commit/0aade99211dc45cc85ce8b95fc375612f982b48a))
+* **sdk:** expose `execute` exit code in artifact ([#5300](https://github.com/hackerxiaobai/deepagents/issues/5300)) ([de8bfca](https://github.com/hackerxiaobai/deepagents/commit/de8bfca8255d673c1e7860e8c158ed119238197e))
+
+
+### Bug Fixes
+
+* **sdk:** add `files` state only for state backends ([#5643](https://github.com/hackerxiaobai/deepagents/issues/5643)) ([63c13f3](https://github.com/hackerxiaobai/deepagents/commit/63c13f3e6bc79a5304e542178ac410b517c64c31))
+* **sdk:** batch concurrent `ContextHubBackend` mutations ([#5471](https://github.com/hackerxiaobai/deepagents/issues/5471)) ([822f7c9](https://github.com/hackerxiaobai/deepagents/commit/822f7c9b02e6d99bdb46b5545bb2543783c01769))
+* **sdk:** clarify zero execute timeout semantics ([#5752](https://github.com/hackerxiaobai/deepagents/issues/5752)) ([4b49286](https://github.com/hackerxiaobai/deepagents/commit/4b4928613262ac23d419f0e8788f24412a8fdafb))
+* **sdk:** enforce full criterion coverage in `RubricMiddleware` ([#5234](https://github.com/hackerxiaobai/deepagents/issues/5234)) ([ddb69b6](https://github.com/hackerxiaobai/deepagents/commit/ddb69b609a02d7203cda7f3ea2796ca73e5b5795))
+* **sdk:** exclude tools from execution when setting `excluded_tools` in harness profiles ([#5809](https://github.com/hackerxiaobai/deepagents/issues/5809)) ([553d412](https://github.com/hackerxiaobai/deepagents/commit/553d412bb4f4b868fbf080ab561f76b4dd335f52))
+* **sdk:** identify file-capable provider classes ([#5326](https://github.com/hackerxiaobai/deepagents/issues/5326)) ([e5d5391](https://github.com/hackerxiaobai/deepagents/commit/e5d53917c01aadcebe4e7e4a1974322033ae6c87))
+* **sdk:** make `BackendProtocol.glob` recursive for bare patterns ([#5026](https://github.com/hackerxiaobai/deepagents/issues/5026)) ([32f35d5](https://github.com/hackerxiaobai/deepagents/commit/32f35d5e01f460549c10365eb569978909f5c969))
+* **sdk:** offload conversation history to distinct session ID when summarizing ([#5470](https://github.com/hackerxiaobai/deepagents/issues/5470)) ([fa55c52](https://github.com/hackerxiaobai/deepagents/commit/fa55c52fe774462b2775c0d77dcf811d6dfd0e35))
+* **sdk:** prevent local shell commands from stealing TUI input ([#5873](https://github.com/hackerxiaobai/deepagents/issues/5873)) ([c94a090](https://github.com/hackerxiaobai/deepagents/commit/c94a090c1b21918c9e4eced52ecb4e3bf7476f43))
+* **sdk:** resolve exact-file `delete` targets with first-match-wins o… ([#5229](https://github.com/hackerxiaobai/deepagents/issues/5229)) ([6dd2a7d](https://github.com/hackerxiaobai/deepagents/commit/6dd2a7d2f83bd63844a987f6ec65ac9244ec8c5b))
+* **sdk:** scrub multimodal content blocks unsupported by the model's profile ([#5194](https://github.com/hackerxiaobai/deepagents/issues/5194)) ([bdc6104](https://github.com/hackerxiaobai/deepagents/commit/bdc610445534ba339360f3988de6b50b60482f1d))
+* **sdk:** surface sandbox glob failures instead of reporting no matches ([#5566](https://github.com/hackerxiaobai/deepagents/issues/5566)) ([0286f62](https://github.com/hackerxiaobai/deepagents/commit/0286f628646d4196e5e89164b45803fb7b97a0cc))
+
 ## [0.7.11](https://github.com/langchain-ai/deepagents/compare/deepagents==0.7.10...deepagents==0.7.11) (2026-08-28)
 
 ### Features
